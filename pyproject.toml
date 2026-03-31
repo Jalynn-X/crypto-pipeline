@@ -1,0 +1,23 @@
+[project]
+name = "test-pipeline"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "apache-beam==2.48.0",
+    "apache-flink==1.17.2",
+    "kafka-python==2.2.0",
+    "numpy==1.24.4",
+    "pandas==2.1.0",
+    "requests>=2.32.0",
+    "setuptools>=68.0.0",
+    "wheel>=0.40.0",
+    "setuptools<72",
+    "dbt-bigquery>=1.9.2",
+]
+
+[tool.uv.extra-build-dependencies]
+apache-beam = ["setuptools"]
+crcmod = ["setuptools"]
+apache-flink = ["setuptools"]

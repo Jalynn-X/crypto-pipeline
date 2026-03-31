@@ -1,0 +1,16 @@
+version: 2
+
+sources:
+  - name: crypto
+    database: "{{ env_var('GCP_PROJECT_ID') }}"
+    schema: crypto
+    tables:
+      - name: bronze_raw
+        description: "Raw crypto tick data from GCS via external table"
+        columns:
+          - name: pair
+            description: "Trading pair e.g. XBTUSD, ETHUSD"
+          - name: data
+            description: "Raw JSON payload from Kraken API"
+          - name: ingestion_time
+            description: "Timestamp when producer received the data"

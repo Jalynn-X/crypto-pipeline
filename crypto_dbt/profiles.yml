@@ -1,0 +1,12 @@
+crypto_dbt:
+  target: dev
+  outputs:
+    dev:
+      type: bigquery
+      method: service-account
+      project: "{{ env_var('GCP_PROJECT_ID') }}"
+      dataset: crypto
+      keyfile: /opt/credentials/credentials.json
+      location: US
+      threads: 4
+      timeout_seconds: 300

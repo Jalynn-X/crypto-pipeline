@@ -1,0 +1,19 @@
+FROM python:3.11-slim
+
+RUN apt-get update && apt-get install -y \
+    curl \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN pip install \
+    dbt-bigquery==1.7.9 \
+    google-cloud-bigquery==3.13.0 \
+    google-cloud-storage==2.13.0 \
+    google-auth==2.25.2
+
+WORKDIR /opt/dbt
+
+COPY crypto_dbt/ .
+COPY setup/ /opt/setup/
+
+ENTRYPOINT ["dbt"]

@@ -1,0 +1,35 @@
+version: 2
+
+models:
+  - name: silver_prices
+    description: "Cleaned and typed crypto price records"
+    columns:
+      - name: pair
+        description: "Trading pair"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['XBTUSD', 'ETHUSD']
+      - name: price
+        description: "Last trade price"
+        tests:
+          - not_null
+      - name: ingested_at
+        description: "When the tick was received"
+        tests:
+          - not_null
+      - name: event_date
+        tests:
+          - not_null
+
+  - name: gold_alerts
+    description: "Price alerts when % change exceeds threshold"
+    columns:
+      - name: alert_type
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['DROP', 'SPIKE']
+      - name: percent_change
+        tests:
+          - not_null

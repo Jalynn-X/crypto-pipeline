@@ -1,0 +1,9 @@
+numpy==1.24.4
+setuptools<72
+wheel>=0.40.0
+
+kafka-python==2.2.0
+requests>=2.32.0
+pandas==2.1.0
+apache-flink==1.17.2
+apache-beam==2.48.0

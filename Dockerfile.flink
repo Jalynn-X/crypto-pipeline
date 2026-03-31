@@ -1,0 +1,24 @@
+FROM apache/flink:1.17-scala_2.12
+
+# Install Python
+RUN apt-get update && apt-get install -y python3 python3-pip
+
+# Make "python" command available (required by Flink)
+RUN ln -s /usr/bin/python3 /usr/bin/python
+
+# Install PyFlink + GCS Python client
+RUN pip3 install apache-flink google-cloud-storage
+
+# ── Kafka JARs ──────────────────────────────────────────────────────────────
+RUN mkdir -p /opt/flink/usrlib && \
+    curl -L -o /opt/flink/usrlib/flink-connector-kafka-1.17.2.jar \
+    https://repo1.maven.org/maven2/org/apache/flink/flink-connector-kafka/1.17.2/flink-connector-kafka-1.17.2.jar && \
+    curl -L -o /opt/flink/usrlib/kafka-clients-3.4.0.jar \
+    https://repo1.maven.org/maven2/org/apache/kafka/kafka-clients/3.4.0/kafka-clients-3.4.0.jar
+
+# ── GCS plugin (already bundled in Flink opt/, just needs to be in plugins/) ─
+RUN mkdir -p /opt/flink/plugins/gs-fs-hadoop && \
+    cp /opt/flink/opt/flink-gs-fs-hadoop-1.17.2.jar \
+       /opt/flink/plugins/gs-fs-hadoop/
+
+WORKDIR /opt/flink

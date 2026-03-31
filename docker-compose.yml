@@ -1,0 +1,119 @@
+version: "3.8"
+
+services:
+  redpanda:
+    image: redpandadata/redpanda:v25.3.9
+    container_name: redpanda
+    command:
+      - redpanda
+      - start
+      - --smp
+      - "1"
+      - --reserve-memory
+      - 0M
+      - --overprovisioned
+      - --node-id
+      - "1"
+      - --kafka-addr
+      - PLAINTEXT://0.0.0.0:29092,OUTSIDE://0.0.0.0:9092
+      - --advertise-kafka-addr
+      - PLAINTEXT://redpanda:29092,OUTSIDE://localhost:9092
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    volumes:
+      - redpanda_data:/var/lib/redpanda/data
+    restart: always
+
+  jobmanager:
+    build:
+      context: .
+      dockerfile: Dockerfile.flink
+    container_name: flink-jobmanager
+    ports:
+      - "8081:8081"
+    volumes:
+      - ./src:/opt/src
+      # Auth option A: gcloud ADC (your local login)
+      - ~/.config/gcloud:/root/.config/gcloud:ro
+      # Auth option B: service account JSON (peer reviewers)
+      # Mounts /dev/null if GOOGLE_APPLICATION_CREDENTIALS is not set — avoids crash
+      - ${GOOGLE_APPLICATION_CREDENTIALS:-/dev/null}:/opt/credentials/credentials.json:ro
+    command: jobmanager
+    environment:
+      - GOOGLE_APPLICATION_CREDENTIALS=/opt/credentials/credentials.json
+      - GCP_PROJECT_ID=${GCP_PROJECT_ID}
+      - GCS_BUCKET=${GCS_BUCKET}
+      - GCS_CHECKPOINT_PATH=${GCS_CHECKPOINT_PATH}
+      - GCS_BRONZE_PATH=${GCS_BRONZE_PATH}
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager
+    depends_on:
+      - redpanda
+    restart: always
+
+  taskmanager:
+    build:
+      context: .
+      dockerfile: Dockerfile.flink
+    container_name: flink-taskmanager
+    depends_on:
+      - jobmanager
+    volumes:
+      - ./src:/opt/src
+      # Same auth mounts as jobmanager
+      - ~/.config/gcloud:/root/.config/gcloud:ro
+      - ${GOOGLE_APPLICATION_CREDENTIALS:-/dev/null}:/opt/credentials/credentials.json:ro
+    command: taskmanager
+    environment:
+      - GOOGLE_APPLICATION_CREDENTIALS=/opt/credentials/credentials.json
+      - GCP_PROJECT_ID=${GCP_PROJECT_ID}
+      - GCS_BUCKET=${GCS_BUCKET}
+      - GCS_CHECKPOINT_PATH=${GCS_CHECKPOINT_PATH}
+      - GCS_BRONZE_PATH=${GCS_BRONZE_PATH}
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager
+        taskmanager.numberOfTaskSlots: 4
+    restart: always
+
+  kestra:
+    image: kestra/kestra:latest
+    container_name: kestra
+    command: server standalone
+    ports:
+      - "8080:8080"
+    environment:
+      KESTRA_CONFIGURATION: |
+        kestra:
+          repository:
+            type: memory
+          queue:
+            type: memory
+          storage:
+            type: local
+            local:
+              base-path: "/tmp/kestra"
+    restart: always
+    
+  dbt:
+    build:
+      context: .
+      dockerfile: Dockerfile.dbt
+    container_name: dbt
+    volumes:
+      - ./crypto_dbt:/opt/dbt
+      - ./setup:/opt/setup
+      - ${GOOGLE_APPLICATION_CREDENTIALS:-/dev/null}:/opt/credentials/credentials.json:ro
+      - ~/.config/gcloud:/root/.config/gcloud:ro
+    environment:
+      - GOOGLE_APPLICATION_CREDENTIALS=/opt/credentials/credentials.json
+      - GCP_PROJECT_ID=${GCP_PROJECT_ID}
+      - GCS_BUCKET=${GCS_BUCKET}
+      - DBT_PROFILES_DIR=/opt/dbt
+    profiles:
+      - dbt
+
+volumes:
+  redpanda_data:
