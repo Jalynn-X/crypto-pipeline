@@ -14,7 +14,8 @@ dependencies = [
     "setuptools>=68.0.0",
     "wheel>=0.40.0",
     "setuptools<72",
-    "dbt-bigquery>=1.9.2",
+    "dbt-bigquery==1.7.9",
+    "google-cloud-bigquery==3.13.0",
 ]
 
 [tool.uv.extra-build-dependencies]

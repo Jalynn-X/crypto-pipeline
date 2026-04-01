@@ -8,8 +8,8 @@ from google.cloud import bigquery
 
 PROJECT_ID = os.environ["GCP_PROJECT_ID"]
 GCS_BUCKET = os.environ["GCS_BUCKET"]
-DATASET = "crypto"
-LOCATION = "US"
+DATASET = "crypto_dataset"
+LOCATION = "EU"
 
 client = bigquery.Client(project=PROJECT_ID)
 

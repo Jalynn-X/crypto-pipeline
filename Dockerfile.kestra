@@ -1,0 +1,10 @@
+FROM kestra/kestra:latest
+
+USER root
+
+# Only need docker CLI to exec into flink container
+RUN apt-get update -qq && \
+    apt-get install -y -qq docker.io && \
+    rm -rf /var/lib/apt/lists/*
+
+USER kestra

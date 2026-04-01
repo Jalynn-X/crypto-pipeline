@@ -1,0 +1,9 @@
+FROM python:3.11-slim
+
+WORKDIR /opt/src
+
+RUN pip install kafka-python requests
+
+COPY src/producers/producer.py .
+
+CMD ["python3", "producer.py"]
