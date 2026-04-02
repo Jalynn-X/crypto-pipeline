@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   redpanda:
     image: redpandadata/redpanda:v25.3.9
@@ -99,35 +97,32 @@ services:
       - GCS_CHECKPOINT_PATH=${GCS_CHECKPOINT_PATH}
     entrypoint: /opt/flink/bin/flink run -m jobmanager:8081 -py /opt/src/job/crypto_ingest.py
 
-  kestra-db:
-    image: postgres:15
-    environment:
-      POSTGRES_DB: kestra
-      POSTGRES_USER: kestra
-      POSTGRES_PASSWORD: kestra_password
 
-kestra:
-    image: kestra/kestra:latest
+  kestra:
+    image: kestra/kestra:latest # Simplified unless you have a custom Dockerfile
     container_name: kestra
-    depends_on:
-      - kestra-db
     command: server standalone
+    user: "root"
     ports:
-      - "8080:8080"
+      - "8090:8080"
     env_file: 
-      - .env
+      - .env  # Re-added so your flows can see your project variables
     volumes:
+      - kestra_data:/var/kestra-data
       - /var/run/docker.sock:/var/run/docker.sock
-      - kestra_storage:/app/storage
+      - ./crypto_dbt:/opt/dbt
+      - ./src:/opt/src
     environment:
       KESTRA_CONFIGURATION: |
         kestra:
           repository:
-            type: postgres
+            type: memory
           queue:
-            type: postgres
+            type: memory
           storage:
             type: local
+            local:
+              base-path: "/var/kestra-data"
           variables:
             envs:
               gcp_project_id: "${GCP_PROJECT_ID}"
@@ -136,5 +131,4 @@ kestra:
 
 volumes:
   redpanda_data:
-  kestra_storage:
-  kestra_db_data:
+  kestra_data:
