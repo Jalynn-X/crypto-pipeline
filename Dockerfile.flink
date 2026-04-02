@@ -7,7 +7,7 @@ RUN apt-get update && apt-get install -y python3 python3-pip
 RUN ln -s /usr/bin/python3 /usr/bin/python
 
 # Install PyFlink + GCS Python client
-RUN pip3 install apache-flink google-cloud-storage
+RUN pip3 install --no-cache-dir --default-timeout=1000 apache-flink google-cloud-storage
 
 # ── Kafka JARs ──────────────────────────────────────────────────────────────
 RUN mkdir -p /opt/flink/usrlib && \

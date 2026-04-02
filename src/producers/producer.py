@@ -10,11 +10,14 @@ INTERVAL = int(os.getenv("INTERVAL", 60))
 
 pairs = ["XBTUSD", "ETHUSD"]
 TOPIC = "crypto"
-SERVER = "localhost:9092"
+SERVER = os.getenv("KAFKA_SERVER", "redpanda:29092")
+
+time.sleep(10)
 
 producer = KafkaProducer(
     bootstrap_servers=[SERVER],
-    value_serializer=lambda v: json.dumps(v).encode("utf-8")
+    value_serializer=lambda v: json.dumps(v).encode("utf-8"),
+    retries=5
 )
 
 def get_price(pair):
@@ -33,6 +36,7 @@ def get_price(pair):
 
 
 while True:
+    print(f"--- Fetching data at {datetime.utcnow()} ---")
     for pair in pairs:
         data = get_price(pair)
 

@@ -25,6 +25,18 @@ services:
       - redpanda_data:/var/lib/redpanda/data
     restart: always
 
+  producer:
+    build:
+      context: .
+      dockerfile: Dockerfile.producer
+    container_name: crypto-producer
+    depends_on:
+      - redpanda
+    environment:
+      - INTERVAL=60
+      - KAFKA_SERVER=redpanda:29092 
+    restart: always
+
   jobmanager:
     build:
       context: .
@@ -42,12 +54,9 @@ services:
       - GCP_PROJECT_ID=${GCP_PROJECT_ID}
       - GCS_BUCKET=${GCS_BUCKET}
       - GCS_CHECKPOINT_PATH=${GCS_CHECKPOINT_PATH}
-      - GCS_BRONZE_PATH=${GCS_BRONZE_PATH}
       - |
         FLINK_PROPERTIES=
         jobmanager.rpc.address: jobmanager
-    depends_on:
-      - redpanda
     restart: always
 
   taskmanager:
@@ -67,53 +76,65 @@ services:
       - GCP_PROJECT_ID=${GCP_PROJECT_ID}
       - GCS_BUCKET=${GCS_BUCKET}
       - GCS_CHECKPOINT_PATH=${GCS_CHECKPOINT_PATH}
-      - GCS_BRONZE_PATH=${GCS_BRONZE_PATH}
       - |
         FLINK_PROPERTIES=
         jobmanager.rpc.address: jobmanager
         taskmanager.numberOfTaskSlots: 4
     restart: always
 
-  producer:
+  flink-submitter:
     build:
       context: .
-      dockerfile: Dockerfile.producer
-    container_name: crypto-producer
-    environment:
-      - KAFKA_BOOTSTRAP_SERVERS=redpanda:29092
+      dockerfile: Dockerfile.flink
+    container_name: flink-submitter
     depends_on:
-      - redpanda
-    restart: always
+      - jobmanager
+    volumes:
+      - ./src:/opt/src
+      - ${GOOGLE_APPLICATION_CREDENTIALS}:/opt/credentials/credentials.json:ro
+    environment:
+      - GOOGLE_APPLICATION_CREDENTIALS=/opt/credentials/credentials.json
+      - GCP_PROJECT_ID=${GCP_PROJECT_ID}
+      - GCS_BUCKET=${GCS_BUCKET}
+      - GCS_CHECKPOINT_PATH=${GCS_CHECKPOINT_PATH}
+    entrypoint: /opt/flink/bin/flink run -m jobmanager:8081 -py /opt/src/job/crypto_ingest.py
 
-  kestra:
-    build:
-      context: .
-      dockerfile: Dockerfile.kestra
+  kestra-db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: kestra
+      POSTGRES_USER: kestra
+      POSTGRES_PASSWORD: kestra_password
+
+kestra:
+    image: kestra/kestra:latest
     container_name: kestra
+    depends_on:
+      - kestra-db
     command: server standalone
-    user: "root"
     ports:
       - "8080:8080"
-    env_file:
-      - .env_encoded              # only contains SECRET_GCP_SERVICE_ACCOUNT
+    env_file: 
+      - .env
     volumes:
-      - kestra_data:/var/kestra-data
-      - ./crypto_dbt:/opt/dbt
-      - ./src:/opt/src
       - /var/run/docker.sock:/var/run/docker.sock
+      - kestra_storage:/app/storage
     environment:
       KESTRA_CONFIGURATION: |
         kestra:
           repository:
-            type: memory
+            type: postgres
           queue:
-            type: memory
+            type: postgres
           storage:
             type: local
-            local:
-              base-path: "/var/kestra-data"
+          variables:
+            envs:
+              gcp_project_id: "${GCP_PROJECT_ID}"
+              gcs_bucket: "${GCS_BUCKET}"
     restart: always
 
 volumes:
   redpanda_data:
-  kestra_data:
+  kestra_storage:
+  kestra_db_data:
