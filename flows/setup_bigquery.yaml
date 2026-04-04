@@ -1,0 +1,18 @@
+id: setup_bigquery
+namespace: crypto
+
+tasks:
+  - id: create_bq_dataset
+    type: io.kestra.plugin.gcp.bigquery.CreateDataset
+    serviceAccount: "{{ kv('GCP_CREDS') }}"
+    name: "{{ kv('BQ_DATASET') }}"
+    projectId: "{{ kv('GCP_PROJECT_ID') }}"
+    location: "{{ kv('GCP_LOCATION') }}"
+    ifExists: SKIP
+
+  - id: trigger_pipeline
+    type: io.kestra.plugin.core.flow.Subflow
+    namespace: crypto
+    flowId: dbt_github_pipeline
+    wait: true  # If true, this flow waits for the pipeline to finish before marking itself 'Success'
+    transmitFailed: true # If the pipeline fails, this setup flow also marks as 'Failed'

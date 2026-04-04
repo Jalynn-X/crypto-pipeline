@@ -1,0 +1,41 @@
+id: dbt_github_pipeline
+namespace: crypto
+
+triggers:
+  - id: every_5_minutes
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "*/5 * * * *"    # runs every 5 minutes
+
+tasks:
+  - id: working_dir
+    type: io.kestra.plugin.core.flow.WorkingDirectory
+    tasks:
+      - id: git_clone
+        type: io.kestra.plugin.git.Clone
+        url: https://github.com/Jalynn-X/test-dbt.git
+        branch: main
+
+      - id: dbt_build
+        type: io.kestra.plugin.dbt.cli.DbtCLI
+        containerImage: ghcr.io/kestra-io/dbt-bigquery:latest
+        projectDir: crypto_dbt
+        inputFiles:
+          sa_key.json: "{{kv('GCP_CREDS')}}"
+        env:
+          BQ_DATASET: "{{kv('BQ_DATASET')}}"
+        profiles: |
+          crypto_dbt:
+            outputs:
+              dev:
+                type: bigquery
+                dataset: "{{kv('BQ_DATASET')}}"
+                project: "{{kv('GCP_PROJECT_ID')}}"
+                location: "{{kv('GCP_LOCATION')}}"
+                keyfile: sa_key.json
+                method: service-account
+                threads: 4
+                timeout_seconds: 300
+            target: dev
+        commands:
+          - dbt deps
+          - dbt build
