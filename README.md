@@ -308,17 +308,14 @@ docker compose ps
 
 ### Step 6 — Start Kestra Orchestration 
 
-1. Wait a few seconds for Kestra to fully start, then open the Kestra UI:
-   ```
-   http://localhost:8090
-   ```
+1. Wait a few seconds for Kestra to fully start, then open the Kestra UI by clicking the port 8090 in the Ports tab
 
 2. Register an account exactly as:
    - Email: `admin@123.com`
    - Password: `Admin123`
 > **Important:** If you use other email and password to register, make sure to update the setup_env correspondingly. 
 
-3. Run the setup script to upload all flows and configure the KV store:
+3. Run the setup_env script in codespace terminal to upload all flows and configure the KV store:
    ```bash
    bash setup_env.sh
    ```
@@ -329,10 +326,11 @@ docker compose ps
 
 4. Verify in the Kestra UI that:
    - Namespace `crypto` exists under **Namespaces**
+     - All 5 KV store keys are set under **Namespaces → crypto → KV Store**
    - The following flows are visible under **Flows**:
      - `setup_bigquery`
      - `dbt_github_pipeline`
-   - All 5 KV store keys are set under **Namespaces → crypto → KV Store**
+   
 
 5. Verify that in the **Execution**:
    - The `setup_bigquery` ia automatically run and also trigger the `dbt_github_pipeline`
@@ -345,7 +343,7 @@ docker compose ps
 
 ---
 
-### Step 8 — Visualization in Looker Studio
+### Step 7 — Visualization in Looker Studio
 
 ![Dashboard](https://github.com/Jalynn-X/crypto-pipeline/blob/main/images/Dashboard.PNG)
 
