@@ -13,6 +13,7 @@ insights in Looker Studio.
 
 ## Architecture
 
+![Pipeline Architecture](https://github.com/Jalynn-X/crypto-pipeline/blob/main/images/Pipeline%20Architecture.PNG)
 ```
 Kraken API
     ↓
@@ -30,7 +31,6 @@ dbt (Silver → Gold transformations) Kestra (Orchestration — runs dbt every 5
     ↓
 Looker Studio (Visualization dashboard)
 ```
-
 ---
 
 ## Pipeline Goals
@@ -100,7 +100,7 @@ Gold (BigQuery — partitioned by date, clustered by pair)
   └── gold_ohlc_interval     OHLC candlesticks at configurable interval
   └── gold_alerts            Price alerts (DROP / SPIKE) with gap handling
   └── gold_correlation       BTC vs ETH normalized price comparison
-  └── gold_vwap_analysis     VWAP deviation signals (ABOVE / BELOW / AT)
+  └── gold_vwap_analysis     VWAP deviation
 ```
 
 ---
@@ -162,7 +162,7 @@ crypto-pipeline/
 
 1. Clone the Repository
 ```bash
-git clone https://github.com//crypto-pipeline.git
+git clone https://github.com/Jalynn-X/crypto-pipeline.git
 ```
 You can then open the codespace.
 
@@ -360,35 +360,25 @@ docker compose ps
 
 ### Step 8 — Visualization in Looker Studio
 
+![Dashboard](https://github.com/Jalynn-X/crypto-pipeline/blob/main/images/Dashboard.PNG)
+
 1. Go to [lookerstudio.google.com](https://lookerstudio.google.com)
 
-2. Click **Create** → **Report** → **Add data** → **BigQuery**
+2. Click **Create** → **Report** → **Add data** → **BigQuery**. Select your project and connect to the gold layer tables
 
-3. Select your project and connect to the gold layer tables:
+3. Recommended Chart for Visualization
 
-   | BigQuery Table | Use for |
+   | BigQuery Table | Recommended Chart |
    |---|---|
    | `gold_ohlc_interval` | Candlestick / OHLC price charts |
-   | `gold_alerts` | Alert history and frequency |
-   | `gold_vwap_analysis` | VWAP deviation signal chart |
-   | `gold_correlation` | BTC vs ETH price comparison |
+   | `gold_alerts` | Table for Alert history, pie chart for distribution, bar chart for frequency |
+   | `gold_vwap_analysis` | Bar chart or line chart for VWAP deviation |
+   | `gold_correlation` | Line chart for BTC vs ETH price comparison over time |
 
-4. Recommended charts:
+5. Refresh Dashboard Data
+   - Click the three-dot icon on the top right corner and click refresh data
 
-   - **Time series chart** → `gold_ohlc_interval` → dimension: `window_start`,
-     metric: `close` → shows price movement over time
-   - **Table** → `gold_alerts` → columns: `alert_time`, `pair`, `alert_type`,
-     `percent_change` → recent price alerts
-   - **Scorecard** → `gold_vwap_analysis` → metric: `pct_from_vwap` →
-     current VWAP deviation
-   - **Time series combo chart** → `gold_correlation` → metrics:
-     `btc_indexed` and `eth_indexed` → BTC vs ETH relative performance
 
-5. Set dashboard auto-refresh:
-   - Click the clock icon (⏱) in the toolbar
-   - Set refresh frequency to **5 minutes** to stay in sync with dbt runs
-
-> [View the live dashboard](YOUR_LOOKER_STUDIO_LINK_HERE)
 
 ---
 
