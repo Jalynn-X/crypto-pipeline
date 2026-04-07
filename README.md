@@ -158,19 +158,18 @@ crypto-pipeline/
 
 ---
 
-### Step 1 — Clone the Repository and Installing Local Dependencies
+### Step 1 — Clone the Repository and Install Dependencies
 
 1. Clone the Repository
 ```bash
 git clone https://github.com//crypto-pipeline.git
-cd test-pipeline
 ```
-2. Installing Local Dependencies
-These dependencies are needed to run `producer.py` locally.
+You can then open the codespace.
 
-If using `uv` (recommended for Codespaces):
+2. Install Dependencies
+This project uses uv for package management. Running sync will create a virtual environment and install the exact versions from uv.lock.
 ```bash
-uv add -r requirements.txt
+uv sync
 ```
 
 If using standard pip:
