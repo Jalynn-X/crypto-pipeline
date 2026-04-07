@@ -158,34 +158,13 @@ crypto-pipeline/
 
 ---
 
-### Step 1 — Clone the Repository and Install Dependencies
+### Step 1 — Clone the Repository
 
-1. Option A: Use GitHub Codespaces
-    - Click the Code button on this repo and select Create codespace on main.
-    - Once the terminal opens, run:
-    ```bash
-    uv sync
-    ```
-    - If using standard pip:
-    ```bash
-    pip install -r requirements.txt
-    ```
-
-2. Option B: Local Development
-    - Clone the Repository
-    ```bash
-    git clone https://github.com/Jalynn-X/crypto-pipeline.git
-    cd crypto-pipeline
-    ```
-    - Install Dependencies
-    ```bash
-    uv sync
-    ```
-    - If using standard pip:
-    ```bash
-    pip install -r requirements.txt
-    ```
-
+Clone the Repository
+```bash
+git clone https://github.com/Jalynn-X/crypto-pipeline.git
+cd crypto-pipeline
+```
 
 ---
 
@@ -202,7 +181,7 @@ crypto-pipeline/
 4. Rename the downloaded key file to `credentials.json` and place it in the
    project root:
    ```
-   test-pipeline/
+   crypto-pipeline/
    └── credentials.json   ← place here
    ```
 
@@ -211,12 +190,11 @@ crypto-pipeline/
 
 ---
 
-### Step 3 — Terraform Setup
+### Step 3 — Terraform Setup (Local)
 
-1. Use Terraform to creates the GCS bucket and BigQuery dataset.
+1. In the cloned folder, go to terraform folder and initialize
 
 ```bash
-# go to terraform folder
 cd terraform
 
 # Initialize Terraform providers
@@ -289,24 +267,35 @@ cd ..
 ---
 
 ### Step 4 — Environment Setup
+1. Install Dependencies
+   - If you want to use docker in codespace later, you can push to Github and do the next steps in your codespace.
+    ```bash
+    # If uv it not installed, run
+    pip install uv
+    # If you have uv installed or after uv is installed, run:
+    uv sync
 
-```bash
-# Copy the example environment file
-cp .env.example .env
+    # If you don't use uv but standard pip, run directly:
+    ```bash
+    pip install -r requirements.txt
+    ```
+2. Update .env file
+    - Copy and edit the .env file
+    ```bash
+    # Copy the example environment file
+    cp .env.example .env
+    # Edit .env with your actual values
+    nano .env
+    ```
 
-# Edit .env with your actual values
-nano .env
-```
-
-Your `.env` file should contain:
-
-```bash
-GCP_PROJECT_ID=your-gcp-project-id
-GCS_BUCKET=your-gcs-bucket-name
-GCS_CHECKPOINT_PATH=gs://your-bucket/checkpoints
-GCS_BRONZE_PATH=gs://your-bucket/bronze/crypto
-GOOGLE_APPLICATION_CREDENTIALS=./credentials.json
-```
+    - Your `.env` file should contain:
+    ```bash
+    GCP_PROJECT_ID=your-gcp-project-id
+    GCS_BUCKET=your-gcs-bucket-name
+    GCS_CHECKPOINT_PATH=gs://your-bucket/checkpoints
+    GCS_BRONZE_PATH=gs://your-bucket/bronze/crypto
+    GOOGLE_APPLICATION_CREDENTIALS=./credentials.json
+    ```
 
 ---
 
