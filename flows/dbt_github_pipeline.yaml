@@ -38,4 +38,4 @@ tasks:
             target: dev
         commands:
           - dbt deps
-          - dbt build
+          - dbt build --full-refresh
