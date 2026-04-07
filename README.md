@@ -53,7 +53,7 @@ Volume Weighted Average Price (VWAP) is the average price weighted by trading
 volume at each price level. Unlike a simple average, VWAP reflects where most
 trading activity occurred. The pipeline calculates the deviation of the current
 price from VWAP to identify whether the asset is trading at a premium or
-discount relative to its fair value — a key signal used by traders to identify
+discount relative to its fair value, which can be used to identify
 potential buy and sell opportunities.
 
 **BTC vs ETH Correlation Analysis**
@@ -160,22 +160,31 @@ crypto-pipeline/
 
 ### Step 1 — Clone the Repository and Install Dependencies
 
-1. Clone the Repository
-```bash
-git clone https://github.com/Jalynn-X/crypto-pipeline.git
-```
-You can then open the codespace.
+1. Option A: Use GitHub Codespaces
+    - Click the Code button on this repo and select Create codespace on main.
+    - Once the terminal opens, run:
+    ```bash
+    uv sync
+    ```
+    - If using standard pip:
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-2. Install Dependencies
-This project uses uv for package management. Running sync will create a virtual environment and install the exact versions from uv.lock.
-```bash
-uv sync
-```
-
-If using standard pip:
-```bash
-pip install -r requirements.txt
-```
+2. Option B: Local Development
+    - Clone the Repository
+    ```bash
+    git clone https://github.com/Jalynn-X/crypto-pipeline.git
+    cd crypto-pipeline
+    ```
+    - Install Dependencies
+    ```bash
+    uv sync
+    ```
+    - If using standard pip:
+    ```bash
+    pip install -r requirements.txt
+    ```
 
 
 ---
@@ -204,7 +213,7 @@ pip install -r requirements.txt
 
 ### Step 3 — Terraform Setup
 
-Use Terraform to creates the GCS bucket and BigQuery dataset.
+1. Use Terraform to creates the GCS bucket and BigQuery dataset.
 
 ```bash
 # go to terraform folder
@@ -214,9 +223,14 @@ cd terraform
 terraform init
 
 # Authenticate Terraform with Google Cloud
+# Set GOOGLE_APPLICATION_CREDENTIALS to point to the file
+export GOOGLE_APPLICATION_CREDENTIALS=~./credentials.json
+# Now authenticate:
+gcloud auth activate-service-account --key-file $GOOGLE_APPLICATION_CREDENTIALS
+# OR, you can authenticate using OAuth
 gcloud auth application-default login
 ```
-# Update variables.tf
+2. Update variables.tf
 Update `variables.tf` with your values:
 
 ```hcl
@@ -250,11 +264,14 @@ variable "gcs_bucket_name" {
     default = "gcs_bucket_name"              # ← change this, make sure it is unique
 }
 ```
-```bash
-# Preview the resources that will be created
-terraform plan
 
-# Create the GCS bucket and BigQuery dataset
+3. Preview the resources that will be created
+```bash
+terraform plan
+```
+
+4. Create the GCS bucket and BigQuery dataset
+```bash
 terraform apply
 ```
 
@@ -330,6 +347,7 @@ docker compose ps
 2. Register an account exactly as:
    - Email: `admin@123.com`
    - Password: `Admin123`
+> **Important:** If you use other email and password to register, make sure to update the setup_env correspondingly. 
 
 3. Run the setup script to upload all flows and configure the KV store:
    ```bash
