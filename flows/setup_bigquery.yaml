@@ -28,7 +28,7 @@ tasks:
           )
           OPTIONS (
             format = 'NEWLINE_DELIMITED_JSON',
-            uris = ['gs://{{ kv('GCP_BUCKET') }}/bronze/crypto/*.jsonl']
+            uris = ['gs://{{ kv('GCS_BUCKET') }}/bronze/crypto/*.jsonl']
           );
 
   - id: trigger_pipeline

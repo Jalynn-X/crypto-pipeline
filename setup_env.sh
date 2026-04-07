@@ -9,7 +9,7 @@ KESTRA_URL="http://127.0.0.1:8090"
 GCP_PROJECT_ID="your-google-cloud-project-id"
 GCP_LOCATION="your-project-location"
 BQ_DATASET="your-bigquery-dataset-name"
-GCP_BUCKET="your-bucket-name"
+GCS_BUCKET="your-bucket-name"
 
 # Folders
 FLOWS_DIR="./flows"                    # Folder containing your .yaml flows
@@ -80,7 +80,7 @@ echo "⚙️  Setting up Environment Variables..."
 set_kv "GCP_PROJECT_ID" "$GCP_PROJECT_ID"
 set_kv "GCP_LOCATION"   "$GCP_LOCATION"
 set_kv "BQ_DATASET"     "$BQ_DATASET"
-set_kv "GCP_BUCKET"     "$GCP_BUCKET"
+set_kv "GCS_BUCKET"     "$GCS_BUCKET"
 
 # Step 3: Upload GCP Credentials
 echo "Uploading GCP Credentials..."
