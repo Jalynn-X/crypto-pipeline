@@ -2,7 +2,7 @@ FROM python:3.11-slim
 
 WORKDIR /opt/src
 
-RUN pip install kafka-python requests
+RUN pip install kafka-python==2.2.0 requests>=2.32.0
 
 COPY src/producers/producer.py .
 
