@@ -6,10 +6,10 @@ NAMESPACE="crypto"
 KESTRA_URL="http://127.0.0.1:8090"
 
 # GCP Settings
-GCP_PROJECT_ID="crypto-pipeline-491522"
-GCP_LOCATION="EU"
-BQ_DATASET="crypto_dataset"
-GCP_BUCKET="crypto-pipeline-491522-bucket"
+GCP_PROJECT_ID="your-google-cloud-project-id"
+GCP_LOCATION="your-project-location"
+BQ_DATASET="your-bigquery-dataset-name"
+GCP_BUCKET="your-bucket-name"
 
 # Folders
 FLOWS_DIR="./flows"                    # Folder containing your .yaml flows
