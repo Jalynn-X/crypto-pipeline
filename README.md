@@ -179,8 +179,8 @@ crypto-pipeline/
 
 1. Make sure you have terraform installed locally on your computer
 2. You can copy the terraform folder in the repository and go to the terraform folder
-
 ```bash
+# Run following commands in bash
 cd terraform
 
 # Initialize Terraform providers
@@ -188,6 +188,7 @@ terraform init
 
 # Authenticate Terraform with Google Cloud using OAuth
 gcloud auth application-default login
+# Then in the opened window, allow Google Auth Library access to your Google Account
 ```
 3. Update variables.tf
 Update `variables.tf` with your values:
@@ -240,12 +241,12 @@ following were created:
 - GCS bucket: `your-project-id-bucket`
 - BigQuery dataset: `crypto_dataset` (in your chosen location)
 
-> If you have questions of setting up bucket and bigquery with terraform, you can refer to course material
+> I followed the setup in the course material. If you have questions of setting up bucket and bigquery with terraform, you can refer to [course material](https://github.com/DataTalksClub/data-engineering-zoomcamp/blob/main/01-docker-terraform/terraform/windows.md)
 ---
 
 ### Step 3 — Environment Setup
 
-If you want to use docker in codespace later, you can do the next steps in codespace by directly clicking "Creating codespace on main"
+If you want to use docker in codespace later, you can do the next steps in codespace by directly clicking code on this [page](https://github.com/Jalynn-X/crypto-pipeline/tree/main) and then selecting "Creating codespace on main"
 
 1. Install Dependencies
     ```bash
@@ -363,7 +364,12 @@ docker compose ps
 5. Refresh Dashboard Data
    - Click the three-dot icon on the top right corner and click refresh data
 
+### Step 7 — Delete the Bucket and Bigquery Dataset
 
+In the terraform folder (the directory where your main.tf is located:), run in bash:
+```bash
+terraform destroy
+```
 
 ---
 
