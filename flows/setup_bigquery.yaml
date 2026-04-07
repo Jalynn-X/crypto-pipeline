@@ -2,17 +2,38 @@ id: setup_bigquery
 namespace: crypto
 
 tasks:
-  - id: create_bq_dataset
-    type: io.kestra.plugin.gcp.bigquery.CreateDataset
-    serviceAccount: "{{ kv('GCP_CREDS') }}"
-    name: "{{ kv('BQ_DATASET') }}"
-    projectId: "{{ kv('GCP_PROJECT_ID') }}"
-    location: "{{ kv('GCP_LOCATION') }}"
-    ifExists: SKIP
+  - id: bq_infrastructure_setup
+    type: io.kestra.plugin.core.flow.Sequential
+    tasks:
+      - id: create_bq_dataset
+        type: io.kestra.plugin.gcp.bigquery.CreateDataset
+        serviceAccount: "{{ kv('GCP_CREDS') }}"
+        name: "{{ kv('BQ_DATASET') }}"
+        projectId: "{{ kv('GCP_PROJECT_ID') }}"
+        location: "{{ kv('GCP_LOCATION') }}"
+        ifExists: SKIP
+
+      - id: create_bronze_external_table
+        type: io.kestra.plugin.gcp.bigquery.Query
+        serviceAccount: "{{ kv('GCP_CREDS') }}"
+        projectId: "{{ kv('GCP_PROJECT_ID') }}"
+        location: "{{ kv('GCP_LOCATION') }}"
+        # This replicates your Python script exactly
+        sql: |
+          CREATE EXTERNAL TABLE IF NOT EXISTS `{{ kv('GCP_PROJECT_ID') }}.{{ kv('BQ_DATASET') }}.bronze_raw`
+          (
+            pair STRING,
+            data JSON,
+            ingestion_time TIMESTAMP
+          )
+          OPTIONS (
+            format = 'NEWLINE_DELIMITED_JSON',
+            uris = ['gs://{{ kv('GCP_BUCKET') }}/bronze/crypto/*.jsonl']
+          );
 
   - id: trigger_pipeline
     type: io.kestra.plugin.core.flow.Subflow
     namespace: crypto
     flowId: dbt_github_pipeline
-    wait: true  # If true, this flow waits for the pipeline to finish before marking itself 'Success'
-    transmitFailed: true # If the pipeline fails, this setup flow also marks as 'Failed'
+    wait: true  
+    transmitFailed: true
