@@ -158,17 +158,7 @@ crypto-pipeline/
 
 ---
 
-### Step 1 — Clone the Repository
-
-Clone the Repository
-```bash
-git clone https://github.com/Jalynn-X/crypto-pipeline.git
-cd crypto-pipeline
-```
-
----
-
-### Step 2 — Google Cloud Setup
+### Step 1 — Google Cloud Setup
 
 1. Create a Google Cloud project at [console.cloud.google.com](https://console.cloud.google.com)
 
@@ -178,21 +168,17 @@ cd crypto-pipeline
 
 3. Create and download a JSON key for the service account
 
-4. Rename the downloaded key file to `credentials.json` and place it in the
-   project root:
-   ```
-   crypto-pipeline/
-   └── credentials.json   ← place here
-   ```
+4. Rename the downloaded key file to `credentials.json` for later use
 
 > Make sure that `credentials.json` is listed in `.gitignore` and will never be committed
 > to GitHub. Never share or commit this file.
 
 ---
 
-### Step 3 — Terraform Setup (Local)
+### Step 2 — Terraform Setup (Local)
 
-1. In the cloned folder, go to terraform folder and initialize
+1. Make sure you have terraform installed locally on your computer
+2. You can copy the terraform folder in the repository and go to the terraform folder
 
 ```bash
 cd terraform
@@ -200,15 +186,10 @@ cd terraform
 # Initialize Terraform providers
 terraform init
 
-# Authenticate Terraform with Google Cloud
-# Set GOOGLE_APPLICATION_CREDENTIALS to point to the file
-export GOOGLE_APPLICATION_CREDENTIALS=~./credentials.json
-# Now authenticate:
-gcloud auth activate-service-account --key-file $GOOGLE_APPLICATION_CREDENTIALS
-# OR, you can authenticate using OAuth
+# Authenticate Terraform with Google Cloud using OAuth
 gcloud auth application-default login
 ```
-2. Update variables.tf
+3. Update variables.tf
 Update `variables.tf` with your values:
 
 ```hcl
@@ -243,12 +224,12 @@ variable "gcs_bucket_name" {
 }
 ```
 
-3. Preview the resources that will be created
+4. Preview the resources that will be created
 ```bash
 terraform plan
 ```
 
-4. Create the GCS bucket and BigQuery dataset
+5. Create the GCS bucket and BigQuery dataset
 ```bash
 terraform apply
 ```
@@ -259,16 +240,14 @@ following were created:
 - GCS bucket: `your-project-id-bucket`
 - BigQuery dataset: `crypto_dataset` (in your chosen location)
 
-```bash
-# Return to project root
-cd ..
-```
-
+> If you have questions of setting up bucket and bigquery with terraform, you can refer to course material
 ---
 
-### Step 4 — Environment Setup
+### Step 3 — Environment Setup
+
+If you want to use docker in codespace later, you can do the next steps in codespace by directly clicking "Creating codespace on main"
+
 1. Install Dependencies
-   - If you want to use docker in codespace later, you can push to Github and do the next steps in your codespace.
     ```bash
     # If uv it not installed, run
     pip install uv
@@ -279,7 +258,8 @@ cd ..
     ```bash
     pip install -r requirements.txt
     ```
-2. Update .env file
+2. Put the credentials.json file you get in the step1 in the root folder in codespace
+3. Update .env file
     - Copy and edit the .env file
     ```bash
     # Copy the example environment file
@@ -299,7 +279,7 @@ cd ..
 
 ---
 
-### Step 5 — Kestra Setup
+### Step 4 — Kestra Setup
 Update the setup_env.sh file
 ```python
 # GCP Settings
@@ -314,7 +294,7 @@ FILE_PATH="./credentials.json"          # Your GCP JSON Key path
 
 ---
 
-### Step 6 — Start Infrastructure
+### Step 5 — Start Infrastructure
 
 ```bash
 # Start all containers
@@ -326,7 +306,7 @@ docker compose ps
 
 ---
 
-### Step 7 — Kestra Setup
+### Step 6 — Start Kestra Orchestration 
 
 1. Wait a few seconds for Kestra to fully start, then open the Kestra UI:
    ```
