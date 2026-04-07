@@ -1,46 +1,116 @@
--- Gold layer: price alerts based on 5-min % change
--- Thresholds defined here — easy to tune without touching Flink
-{% set drop_threshold   = -2.0 %}
-{% set spike_threshold  =  2.0 %}
+{{
+    config(
+        materialized='incremental',
+        unique_key=['pair', 'alert_time'],
+        incremental_strategy='merge',
+        partition_by={
+            'field': 'event_date',
+            'data_type': 'date'
+        },
+        cluster_by=['pair', 'alert_type']
+    )
+}}
 
-WITH price_changes AS (
-    SELECT
-        pair,
-        price,
-        ingested_at,
-        event_date,
-        -- Compare to price from ~5 ticks ago (approx 5 min at 1 tick/min)
-        LAG(price, 5) OVER (
-            PARTITION BY pair
-            ORDER BY ingested_at
-        ) AS price_5min_ago
+{% set drop_threshold   = -1.0 %}
+{% set spike_threshold  =  1.0 %}
+{% set lookback_minutes = 30   %}
+{% set max_gap_minutes  = 120  %}
+
+WITH silver AS (
+    SELECT *
     FROM {{ ref('silver_prices') }}
+
+    {% if is_incremental() %}
+        WHERE ingested_at >= (
+            SELECT DATETIME_SUB(
+                COALESCE(MAX(alert_time), '1900-01-01'),
+                INTERVAL {{ lookback_minutes + 5 }} MINUTE
+            )
+            FROM {{ this }}
+        )
+    {% endif %}
 ),
 
-with_pct AS (
+price_with_past AS (
+    SELECT
+        curr.pair,
+        curr.price                                          AS current_price,
+        curr.ingested_at,
+        curr.event_date,
+        past.price                                          AS past_price,
+        past.ingested_at                                    AS past_ingested_at,
+        TIMESTAMP_DIFF(
+            curr.ingested_at,
+            past.ingested_at,
+            MINUTE
+        )                                                   AS minutes_apart
+    FROM silver curr                                        -- 👈 renamed current → curr
+    LEFT JOIN silver past
+        ON  curr.pair = past.pair
+        AND past.ingested_at BETWEEN
+            TIMESTAMP_SUB(
+                curr.ingested_at,
+                INTERVAL {{ lookback_minutes + max_gap_minutes }} MINUTE
+            )
+            AND
+            TIMESTAMP_SUB(
+                curr.ingested_at,
+                INTERVAL {{ lookback_minutes - 2 }} MINUTE
+            )
+),
+
+closest_past AS (
     SELECT
         pair,
-        ingested_at                                   AS alert_time,
-        price                                         AS current_price,
-        price_5min_ago,
-        ROUND((price / price_5min_ago - 1) * 100, 4) AS percent_change,
-        event_date
-    FROM price_changes
-    WHERE price_5min_ago IS NOT NULL
-      AND price_5min_ago > 0
+        current_price,
+        ingested_at,
+        event_date,
+        past_price,
+        past_ingested_at,
+        minutes_apart,
+        ROW_NUMBER() OVER (
+            PARTITION BY pair, ingested_at
+            ORDER BY ABS(minutes_apart - {{ lookback_minutes }}) ASC
+        ) AS rank
+    FROM price_with_past
+    WHERE past_price IS NOT NULL
+),
+
+price_changes AS (
+    SELECT
+        pair,
+        ingested_at                                         AS alert_time,
+        current_price,
+        past_price                                          AS reference_price,
+        past_ingested_at                                    AS reference_time,
+        minutes_apart                                       AS actual_lookback_minutes,
+        ROUND(
+            (current_price / NULLIF(past_price, 0) - 1) * 100,
+            4
+        )                                                   AS percent_change,
+        event_date,
+        CASE
+            WHEN minutes_apart > {{ lookback_minutes + 5 }}
+            THEN TRUE ELSE FALSE
+        END                                                 AS is_gap_comparison
+    FROM closest_past
+    WHERE rank = 1
 )
 
 SELECT
     pair,
     alert_time,
     current_price,
-    price_5min_ago,
+    reference_price,
+    reference_time,
+    actual_lookback_minutes,
     percent_change,
     CASE
         WHEN percent_change <= {{ drop_threshold }}  THEN 'DROP'
         WHEN percent_change >= {{ spike_threshold }} THEN 'SPIKE'
-    END AS alert_type,
+    END                                                     AS alert_type,
+    is_gap_comparison,
     event_date
-FROM with_pct
+FROM price_changes
 WHERE percent_change <= {{ drop_threshold }}
    OR percent_change >= {{ spike_threshold }}

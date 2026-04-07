@@ -2,8 +2,7 @@ version: 2
 
 sources:
   - name: crypto
-    database: "{{ env_var('GCP_PROJECT_ID') }}"
-    schema: crypto_dataset
+    schema: "{{ env_var('BQ_DATASET') }}"
     tables:
       - name: bronze_raw
         description: "Raw crypto tick data from GCS via external table"
