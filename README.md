@@ -248,34 +248,21 @@ following were created:
 
 If you want to use docker in codespace later, you can do the next steps in codespace by directly clicking code on this [page](https://github.com/Jalynn-X/crypto-pipeline/tree/main) and then selecting "Creating codespace on main"
 
-1. Install Dependencies
-    ```bash
-    # If uv it not installed, run
-    pip install uv
-    # If you have uv installed or after uv is installed, run:
-    uv sync
-
-    # If you don't use uv but standard pip, run directly:
-    ```bash
-    pip install -r requirements.txt
-    ```
-2. Put the credentials.json file you get in the step1 in the root folder in codespace
-3. Update .env file
+1. Put the credentials.json file you get in the step1 in the root folder in codespace, copy the path for updating the .env file
+2. Update .env file
     - Copy and edit the .env file
     ```bash
     # Copy the example environment file
     cp .env.example .env
-    # Edit .env with your actual values
-    nano .env
     ```
-
-    - Your `.env` file should contain:
+    - Edit .env with your actual values. Your `.env` file should contain:
     ```bash
     GCP_PROJECT_ID=your-gcp-project-id
     GCS_BUCKET=your-gcs-bucket-name
     GCS_CHECKPOINT_PATH=gs://your-bucket/checkpoints
     GCS_BRONZE_PATH=gs://your-bucket/bronze/crypto
-    GOOGLE_APPLICATION_CREDENTIALS=./credentials.json
+    # Change ./credentials.json to your GCP JSON Key path if different
+    GOOGLE_APPLICATION_CREDENTIALS=./credentials.json 
     ```
 
 ---
@@ -289,7 +276,7 @@ GCP_LOCATION="the location of bigquery dataset"
 BQ_DATASET="the name of bigquery dataset"
 GCP_BUCKET="the name of storage bucket"
 # Folders
-FLOWS_DIR="./flows"                     # Folder containing your .yaml flows
+FLOWS_DIR="./flows"                     # Folder containing .yaml flows
 FILE_PATH="./credentials.json"          # Your GCP JSON Key path
 ```
 
