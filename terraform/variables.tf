@@ -1,21 +1,21 @@
 variable "project" {
     description = "Project ID"
-    default = "crypto-pipeline-491522"
+    default = "your-gcp-project-id"          # ← paste your project id
 }
 
 variable "region" {
     description = "Project Region"
-    default = "europe-west1"
+    default = "europe-west1"                 # ← change to your region
 }
 
 variable "location" {
-    description = "Location"
+    description = "Location"                 # ← change to your location
     default = "EU"
 }
 
 variable "bq_dataset_name" {
     description = "BigQuery Dataset Name"
-    default = "crypto_dataset"
+    default = "crypto_dataset"                # ← keep or change
 }
 
 variable "gcs_storage_class" {
@@ -25,5 +25,5 @@ variable "gcs_storage_class" {
 
 variable "gcs_bucket_name" {
     description = "Storage Bucket Name"
-    default = "crypto-pipeline-491522-bucket"
+    default = "gcs_bucket_name"              # ← change this, make sure it is unique
 }
