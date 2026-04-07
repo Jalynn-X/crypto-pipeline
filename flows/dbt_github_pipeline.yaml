@@ -12,7 +12,7 @@ tasks:
     tasks:
       - id: git_clone
         type: io.kestra.plugin.git.Clone
-        url: https://github.com/Jalynn-X/test-dbt.git
+        url: https://github.com/Jalynn-X/crypto-pipeline.git
         branch: main
 
       - id: dbt_build
