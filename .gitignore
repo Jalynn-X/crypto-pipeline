@@ -1,5 +1,5 @@
 secrets/
-*.json
+credentials.json
 .env
 credentials.json
 __pycache__/

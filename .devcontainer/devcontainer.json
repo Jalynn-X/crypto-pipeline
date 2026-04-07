@@ -1,0 +1,19 @@
+{
+  "name": "Crypto Pipeline",
+  "image": "mcr.microsoft.com/devcontainers/python:3.11",
+  "features": {
+    "ghcr.io/devcontainers/features/terraform:1": {},
+    "ghcr.io/devcontainers/features/gcp-cli:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {},  // <--- Add this line
+    "ghcr.io/astral-sh/uv-devcontainer:0": {}
+  },
+  "postCreateCommand": "uv sync",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "innoverio.vscode-dbt-power-user",
+        "hashicorp.terraform"
+      ]
+    }
+  }
+}
