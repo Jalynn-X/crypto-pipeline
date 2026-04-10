@@ -2,83 +2,39 @@
 
 ## Overview
 
-A real-time crypto price data pipeline that ingests, processes, and visualizes
-Bitcoin (BTC) and Ethereum (ETH) price data from the Kraken API.
+Cryptocurrency markets operate 24/7 with volatility. For many investors, monitoring price action across multiple assets and determining if a price is "fair" or "expensive" relative to trading volume is a constant challenge. This pipeline automates that process by answering three core questions.
 
-The pipeline streams live ticker data every 60 seconds, stores it in a GCS data
-lake, transforms it through a medallion architecture using dbt, and visualizes
-insights in Looker Studio.
+### Analytical Questions and Solutions
+
+1. **Price Volatility**: Can price spikes or drops be detected with alerts being triggered?
+    - The pipeline monitors and detects price Spikes or Drops (±1%) within a 30-minute rolling window. This filters out "noise" and identifies meaningful momentum shifts. The thresholds of Spike and Drop percentages can also be changed as needed.
+2. **Relative Performance**: Do Bitcoin and Ethereum exhibit similar price trends?
+   - Since BTC and ETH have vast price differences, the pipeline normalizes both prices to a base-100 index. This allows for a direct comparison to visualize whether they move together or diverge.
+3. **Value Assessment**: Is the current price "too expensive" based on today's trading volume?
+   - The pipeline calculates the Volume Weighted Average Price (VWAP). By analyzing the deviation between the current price and the VWAP, it identifies potential overbought (premium) or oversold (discount) conditions, providing a more sophisticated "fair value" metric than a simple moving average.
 
 ---
 
 ## Architecture
 
 ![Pipeline Architecture](https://github.com/Jalynn-X/crypto-pipeline/blob/main/images/Pipeline%20Architecture.PNG)
-```
-Kraken API
-    ↓
-Producer
-    ↓
-Redpanda (Kafka-compatible message broker)
-    ↓
-Apache Flink (PyFlink stream processing)
-    ↓
-Google Cloud Storage — Bronze Layer (raw JSONL files)
-    ↓
-BigQuery External Table
-    ↓
-dbt (Silver → Gold transformations) Kestra (Orchestration — runs dbt every 5 minutes)
-    ↓
-Looker Studio (Visualization dashboard)
-```
----
 
-## Pipeline Goals
-
-### 1. Monitor Crypto Prices
-
-Monitor real-time price changes of Bitcoin (XBTUSD) and Ethereum (ETHUSD) and
-generate alerts when prices change beyond configurable thresholds over a rolling
-30-minute window. Alerts are classified as DROP or SPIKE and stored in BigQuery
-for historical analysis and dashboard visualization.
-
-### 2. Analyze the Market
-
-Beyond simple price monitoring, this pipeline enables deeper market analysis
-through two analytical models:
-
-**VWAP Deviation Analysis**
-
-Volume Weighted Average Price (VWAP) is the average price weighted by trading
-volume at each price level. Unlike a simple average, VWAP reflects where most
-trading activity occurred. The pipeline calculates the deviation of the current
-price from VWAP to identify whether the asset is trading at a premium or
-discount relative to its fair value, which can be used to identify
-potential buy and sell opportunities.
-
-**BTC vs ETH Correlation Analysis**
-
-Analyzes whether Ethereum price movements follow Bitcoin. Since BTC and ETH
-have very different absolute prices (~67,000 vs ~2,000 USD), prices are
-normalized to an index starting at 100 to enable fair comparison of relative
-price movements on the same chart. This reveals whether the two assets move
-together or diverge, which is useful for portfolio risk analysis.
-
+> Note: Kestra also handles the initial infrastructure setup, ensuring the BigQuery dataset and External tables exist before the first dbt run.
 ---
 
 ## Tech Stack
 
 | Component | Technology |
 |---|---|
-| Infrastructure | Terraform + Google Cloud Platform |
-| Message Broker | Redpanda (Kafka-compatible) |
-| Stream Processing | Apache Flink 1.17 (PyFlink) |
+| Cloud and Infrastructure | Google Cloud Platform + Terraform |
+| Containerization | Docker + Docker Compose |
+| Data ingestion (Stream Processing) | Python Kafka producer (Kafka client for Redpanda), Redpanda (Kafka-compatible), Flink |
 | Data Lake | Google Cloud Storage |
 | Data Warehouse | Google BigQuery |
-| Transformations | dbt (dbt-bigquery 1.7) |
+| Transformations | dbt |
 | Orchestration | Kestra |
 | Visualization | Looker Studio |
-| Containerization | Docker + Docker Compose |
+
 
 ---
 
@@ -86,15 +42,15 @@ together or diverge, which is useful for portfolio risk analysis.
 
 ```
 Bronze (GCS)
-  Raw JSONL files partitioned by YYYY/MM/DD/HH/
-  Stored exactly as received from the Kraken API
-  Accessed in BigQuery via external table (no data copy)
-  Schema: pair STRING, data JSON, ingestion_time TIMESTAMP
+    Raw JSONL files partitioned by YYYY/MM/DD/HH/
+    Stored exactly as received from the Kraken API
+    Accessed in BigQuery via external table
+    Schema: pair STRING, data JSON, ingestion_time TIMESTAMP
 
 Silver (BigQuery — partitioned by date, clustered by pair)
-  Parsed, typed, and deduplicated price records
-  All fields from the Kraken ticker API extracted from JSON
-  Fields: price, vwap, volume, trades, high, low, open, bid, ask, spread
+    cleaned and structured data
+    deduplicated records
+    typed columns (price, volume, trades, etc.)
 
 Gold (BigQuery — partitioned by date, clustered by pair)
   └── gold_ohlc_interval     OHLC candlesticks at configurable interval
@@ -151,16 +107,15 @@ crypto-pipeline/
 
 ### Prerequisites
 
-- [Terraform](https://developer.hashicorp.com/terraform/install) >= 1.0
+- [Terraform](https://developer.hashicorp.com/terraform/install)
 - A [Google Cloud](https://cloud.google.com) account
-- [Docker](https://docs.docker.com/get-docker/) and Docker Compose
-  > GitHub Codespaces has Docker pre-installed, which can be used for this project
+- Docker and Docker Compose (GitHub Codespaces has Docker pre-installed, which can be used for this project)
 
 ---
 
 ### Step 1 — Google Cloud Setup
 
-1. Create a Google Cloud project at [console.cloud.google.com](https://console.cloud.google.com)
+1. Create a project at [Google Cloud](https://console.cloud.google.com)
 
 2. Create a service account with the following IAM roles:
    - `Storage Admin`
@@ -241,12 +196,13 @@ following were created:
 - GCS bucket: `your-project-id-bucket`
 - BigQuery dataset: `crypto_dataset` (in your chosen location)
 
-> I followed the setup in the course material. If you have questions of setting up bucket and bigquery with terraform, you can refer to [course material](https://github.com/DataTalksClub/data-engineering-zoomcamp/blob/main/01-docker-terraform/terraform/windows.md)
+> I followed the setup in the course material. If you have questions of setting up bucket and bigquery with terraform, you can also refer to [course material](https://github.com/DataTalksClub/data-engineering-zoomcamp/blob/main/01-docker-terraform/terraform/windows.md)
 ---
 
-### Step 3 — Environment Setup
+> For step3 to step7, it is recommended to use github codespace, where Docker is already available. The following instructions assume you are working in Codespaces. To get started, you can click the Code button and select “Create codespace on main” on this [page](https://github.com/Jalynn-X/crypto-pipeline/tree/main).  
 
-If you want to use docker in codespace later, you can do the next steps in codespace by directly clicking code on this [page](https://github.com/Jalynn-X/crypto-pipeline/tree/main) and then selecting "Creating codespace on main"
+---
+### Step 3 — Environment Setup
 
 1. Put the credentials.json file you get in the step1 in the root folder in codespace, copy the path for updating the .env file
 2. Update .env file
@@ -271,13 +227,14 @@ If you want to use docker in codespace later, you can do the next steps in codes
 Update the setup_env.sh file
 ```python
 # GCP Settings
-GCP_PROJECT_ID="your google project id"
-GCP_LOCATION="the location of bigquery dataset"
-BQ_DATASET="the name of bigquery dataset"
-GCP_BUCKET="the name of storage bucket"
+GCP_PROJECT_ID="your-google-cloud-project-id"
+GCP_LOCATION="your-project-location"
+BQ_DATASET="your-bigquery-dataset-name"
+GCS_BUCKET="your-bucket-name"
+
 # Folders
-FLOWS_DIR="./flows"                     # Folder containing .yaml flows
-FILE_PATH="./credentials.json"          # Your GCP JSON Key path
+FLOWS_DIR="./flows"                    # Folder containing your .yaml flows
+FILE_PATH="./credentials.json"          # Your GCP JSON Key
 ```
 
 ---
@@ -301,7 +258,7 @@ docker compose ps
 2. Register an account exactly as:
    - Email: `admin@123.com`
    - Password: `Admin123`
-> **Important:** If you use other email and password to register, make sure to update the setup_env correspondingly. 
+> **Important:** If you use different email and password, make sure to update `AUTH="admin@123.com:Admin123"` in the `setup_env.sh` correspondingly. 
 
 3. Run the setup_env script in codespace terminal to upload all flows and configure the KV store:
    ```bash
@@ -309,7 +266,7 @@ docker compose ps
    ```
    This script automatically:
    - Uploads all flow files from the `flows/` folder to Kestra
-   - Sets all required KV store values (`GCP_PROJECT_ID`, `GCP_BUCKET`,
+   - Sets all required KV store values (`GCP_PROJECT_ID`, `GCS_BUCKET`,
      `BQ_DATASET`, `GCP_LOCATION`, `GCP_CREDS`)
 
 4. Verify in the Kestra UI that:
@@ -319,7 +276,6 @@ docker compose ps
      - `setup_bigquery`
      - `dbt_github_pipeline`
    
-
 5. Verify that in the **Execution**:
    - The `setup_bigquery` ia automatically run and also trigger the `dbt_github_pipeline`
    - After successful execution, the bigquery dataset should contain the staging, silver, and gold tables tables
@@ -335,7 +291,7 @@ docker compose ps
 
 ![Dashboard](https://github.com/Jalynn-X/crypto-pipeline/blob/main/images/Dashboard.PNG)
 
-1. Go to [lookerstudio.google.com](https://lookerstudio.google.com)
+1. Go to [lookerstudio](https://lookerstudio.google.com)
 
 2. Click **Create** → **Report** → **Add data** → **BigQuery**. Select your project and connect to the gold layer tables
 
@@ -349,9 +305,11 @@ docker compose ps
    | `gold_correlation` | Line chart for BTC vs ETH price comparison over time |
 
 5. Refresh Dashboard Data
-   - Click the three-dot icon on the top right corner and click refresh data
+   - You can click the three-dot icon on the top right corner and then click refresh data
 
-### Step 7 — Delete the Bucket and Bigquery Dataset
+---
+
+### Step 8 — Delete the Bucket and Bigquery Dataset (Local)
 
 In the terraform folder (the directory where your main.tf is located:), run in bash:
 ```bash
@@ -368,7 +326,7 @@ terraform destroy
 - dbt refreshes all BigQuery tables every **5 minutes** via Kestra schedule.
 - Flink checkpoints are written to GCS every **60 seconds** to prevent data
   loss on job restart.
-- The alert model uses a **30-minute rolling window** with ±2% threshold by
+- The alert model uses a **30-minute rolling window** with ±1% threshold by
   default. Both values are configurable in `gold_alerts.sql`.
 - The OHLC model uses a **30-minute candlestick interval** by default.
   You can change `interval_minutes` in `gold_ohlc_interval.sql` as needed.
