@@ -199,7 +199,7 @@ following were created:
 > I followed the setup in the course material. If you have questions of setting up bucket and bigquery with terraform, you can also refer to [course material](https://github.com/DataTalksClub/data-engineering-zoomcamp/blob/main/01-docker-terraform/terraform/windows.md)
 ---
 
-> For step3 to step7, it is recommended to use github codespace, where Docker is already available. The following instructions assume you are working in Codespaces. To get started, you can click the Code button and select “Create codespace on main” on this [page](https://github.com/Jalynn-X/crypto-pipeline/tree/main).  
+> For step3, it is recommended to use github codespace, where Docker is already available. The following instructions assume you are working in Codespaces. To get started, you can click the Code button and select “Create codespace on main” on this [page](https://github.com/Jalynn-X/crypto-pipeline/tree/main).  
 
 ---
 ### Step 3 — Environment Setup
@@ -309,9 +309,15 @@ docker compose ps
 
 ---
 
-### Step 8 — Delete the Bucket and Bigquery Dataset (Local)
+### Step 8 — Shut Down and Clean Up
 
-In the terraform folder (the directory where your main.tf is located:), run in bash:
+1. To stop the running service, run in codespace terminal:
+```bash
+docker compose down -v
+```
+> This will delete all persisted container data.
+2. On your [codepsace](https://github.com/codespaces) page, you can see the codespace you just created and used for this project and delete it.
+3. In the terraform folder (the **Local** directory where your main.tf is located:), run in bash:
 ```bash
 terraform destroy
 ```
