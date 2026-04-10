@@ -43,7 +43,7 @@ class GCSJsonlSink(MapFunction):
 
     def open(self, runtime_context):
         self._last_flush = datetime.utcnow()
-        print(f"✅ GCSJsonlSink opened — flushing every {self.flush_every_seconds}s "
+        print(f"GCSJsonlSink opened — flushing every {self.flush_every_seconds}s "
               f"to gs://{self.bucket_name}")
 
     def map(self, value):
@@ -69,11 +69,11 @@ class GCSJsonlSink(MapFunction):
             content = "\n".join(self._buffer) + "\n"
             blob = bucket.blob(blob_path)
             blob.upload_from_string(content, content_type="application/json")
-            print(f"✅ Flushed {len(self._buffer)} records → gs://{self.bucket_name}/{blob_path}")
+            print(f"Flushed {len(self._buffer)} records → gs://{self.bucket_name}/{blob_path}")
             self._buffer = []
             self._last_flush = now
         except Exception as e:
-            print(f"❌ GCS write failed: {e}")
+            print(f"GCS write failed: {e}")
 
 # -----------------------------
 # FLINK ENVIRONMENT CONFIGURATION
